@@ -131,7 +131,7 @@
                     </div>
                     <div class="card-body bg-light">
                         <div class="d-flex flex-wrap gap-2 justify-content-center">
-                            @foreach (var droid in ((IEnumerable<Droid>)Warehouse).Reverse())
+                            @foreach (var droid in Warehouse)
                             {
                                 <div class="border rounded p-2 bg-white text-center shadow-sm" style="width: 80px; height: 90px; overflow: hidden;">
                                     <DroidVisual DroidData="@droid" Scale="0.6" />
@@ -179,11 +179,6 @@
 
     private void NextLevel()
     {
-        // Add to Warehouse before generating new level
-        // We need to re-create the 'successful' droid state because 'Target' is already set
-        // But logic: if build was success, the built droid == Target.
-        Warehouse.Add(Target);
-
         // 1. Generate new Level
         Score += 100;
         Level++;
@@ -254,6 +249,7 @@
             if (builtDroid == Target)
             {
                 Success = true;
+                Warehouse.Add(builtDroid);
             }
             else
             {
