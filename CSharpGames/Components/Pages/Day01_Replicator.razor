@@ -1,0 +1,164 @@
+@page "/day01"
+@rendermode InteractiveServer
+
+<PageTitle>Day 1: The Replicator</PageTitle>
+
+<div class="container mt-4">
+    <h1 class="text-primary mb-4">Day 1: The Replicator</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Concept: Records</h5>
+                    <p class="card-text">
+                        Records are immutable data types. You cannot change a record once created. 
+                        Instead, you use the <code>with</code> expression to create a modified copy.
+                    </p>
+                    <div class="alert alert-secondary">
+                        <code>var newBot = oldBot with { Property = Value };</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    Factory Floor
+                </div>
+                <div class="card-body">
+                    <p><strong>Mission:</strong> Replicate the Prototype logic to create the Target droid.</p>
+                    
+                    <div class="row text-center mb-4">
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-light">
+                                <h6>Prototype</h6>
+                                <div>Name: <strong>@Prototype.Name</strong></div>
+                                <div>Model: <strong>@Prototype.Model</strong></div>
+                                <div>Color: <strong>@Prototype.Color</strong></div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded bg-warning bg-opacity-10">
+                                <h6>Target Specification</h6>
+                                <div>Name: <strong>@Target.Name</strong></div>
+                                <div>Model: <strong>@Target.Model</strong></div>
+                                <div>Color: <strong>@Target.Color</strong></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Construct the Target using <code>with</code>:</label>
+                        <div class="input-group">
+                            <span class="input-group-text font-monospace">var target = prototype</span>
+                            <input @bind="UserCode" @bind:event="oninput" type="text" class="form-control font-monospace" placeholder=" with { ... }" />
+                            <button @onclick="BuildDroid" class="btn btn-primary">Build</button>
+                        </div>
+                    </div>
+
+                    @if (ShowResult)
+                    {
+                        @if (Success)
+                        {
+                             <div class="alert alert-success">
+                                 <strong>Success!</strong> Droid build complete. <br/>
+                                 Replicated: @ResultOutput
+                             </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-danger">
+                                <strong>Build Failed!</strong> <br/>
+                                Error: @ErrorMessage
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    // 1. Define the Record
+    public record Droid(string Name, string Model, string Color);
+
+    private Droid Prototype = new Droid("Alpha", "T-800", "Silver");
+    private Droid Target = new Droid("Alpha", "T-800", "Red"); // Same bot, different color
+
+    private string UserCode { get; set; } = "";
+    private bool ShowResult { get; set; } = false;
+    private bool Success { get; set; } = false;
+    private string ResultOutput { get; set; } = "";
+    private string ErrorMessage { get; set; } = "";
+
+    private void BuildDroid()
+    {
+        ShowResult = true;
+        try
+        {
+            // Simple parsing to simulate "eval" for educational purposes
+            // In a real app we'd use Roslyn scripting, but here we'll manually parse the 'with' syntax
+            // Expected syntax: " with { Color = \"Red\" }" or "with { Color = \"Red\" }"
+
+            var code = UserCode.Trim();
+            if (!code.StartsWith("with"))
+            {
+                 throw new Exception("Code must start with the 'with' keyword.");
+            }
+
+            // Extract content inside braces
+            var start = code.IndexOf('{');
+            var end = code.LastIndexOf('}');
+
+            if (start == -1 || end == -1 || end < start)
+                 throw new Exception("Syntax error: Missing braces { }.");
+
+            var content = code.Substring(start + 1, end - start - 1).Trim();
+            
+            // Very basic parser for demonstration: "Color = "Red""
+            var parts = content.Split('=');
+            if (parts.Length != 2)
+                 throw new Exception("Syntax error: assign a property like 'Color = ...'");
+
+            var prop = parts[0].Trim();
+            var valRaw = parts[1].Trim().Trim('"', '\''); // Strip quotes
+
+            Droid builtDroid;
+
+            if (prop == "Color")
+            {
+                 builtDroid = Prototype with { Color = valRaw };
+            }
+            else if (prop == "Name")
+            {
+                 builtDroid = Prototype with { Name = valRaw };
+            }
+            else if (prop == "Model")
+            {
+                 builtDroid = Prototype with { Model = valRaw };
+            }
+            else
+            {
+                throw new Exception($"Unknown property '{prop}'");
+            }
+
+            // Verify
+            if (builtDroid == Target)
+            {
+                Success = true;
+                ResultOutput = builtDroid.ToString();
+            }
+            else
+            {
+                Success = false;
+                ErrorMessage = $"Droid built, but specifications do not match Target.\nResult: {builtDroid}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Success = false;
+            ErrorMessage = ex.Message;
+        }
+    }
+}
