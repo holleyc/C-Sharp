@@ -1,0 +1,15 @@
+/home/xm7x/C-Sharp/C-Sharp/bin/Debug/net8.0/CSharpPlayground
+/home/xm7x/C-Sharp/C-Sharp/bin/Debug/net8.0/CSharpPlayground.deps.json
+/home/xm7x/C-Sharp/C-Sharp/bin/Debug/net8.0/CSharpPlayground.runtimeconfig.json
+/home/xm7x/C-Sharp/C-Sharp/bin/Debug/net8.0/CSharpPlayground.dll
+/home/xm7x/C-Sharp/C-Sharp/bin/Debug/net8.0/CSharpPlayground.pdb
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.GeneratedMSBuildEditorConfig.editorconfig
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.AssemblyInfoInputs.cache
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.AssemblyInfo.cs
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.csproj.CoreCompileInputs.cache
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.sourcelink.json
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.dll
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/refint/CSharpPlayground.dll
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.pdb
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/CSharpPlayground.genruntimeconfig.cache
+/home/xm7x/C-Sharp/C-Sharp/obj/Debug/net8.0/ref/CSharpPlayground.dll
