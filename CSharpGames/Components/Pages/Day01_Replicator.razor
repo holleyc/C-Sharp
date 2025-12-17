@@ -15,8 +15,10 @@
         </div>
         
         <div class="bg-white p-3 rounded border">
-            <h6 class="text-uppercase text-muted small fw-bold mb-2">Effort / Code Required</h6>
-            <div class="row align-items-center mb-1">
+            <h6 class="text-uppercase text-muted small fw-bold mb-2">Effort / Code Required (Click to Compare)</h6>
+            
+            <!-- Record Row -->
+            <div class="row align-items-center mb-1 p-1 rounded hover-bg-light" style="cursor: pointer;" @onclick="@(() => ShowExample("record"))">
                 <div class="col-2 small text-end">Record:</div>
                 <div class="col-8">
                      <div class="progress" style="height: 8px;">
@@ -25,7 +27,9 @@
                 </div>
                 <div class="col-2 small text-success fw-bold">1 Line</div>
             </div>
-            <div class="row align-items-center">
+
+            <!-- Class Row -->
+            <div class="row align-items-center p-1 rounded hover-bg-light" style="cursor: pointer;" @onclick="@(() => ShowExample("class"))">
                 <div class="col-2 small text-end">Class:</div>
                 <div class="col-8">
                      <div class="progress" style="height: 8px;">
@@ -34,6 +38,16 @@
                 </div>
                 <div class="col-2 small text-danger fw-bold">50+ Lines</div>
             </div>
+
+            <!-- Code Display -->
+            @if (!string.IsNullOrEmpty(SelectedExample))
+            {
+                <div class="mt-3 bg-light p-2 rounded border position-relative">
+                    <button class="btn btn-sm btn-close position-absolute top-0 end-0 m-2" @onclick="@(() => SelectedExample = null)"></button>
+                    <small class="text-muted d-block mb-1">@SelectedTitle Example:</small>
+                    <pre class="mb-0 overflow-auto" style="max-height: 200px; font-size: 0.8em;"><code>@SelectedCode</code></pre>
+                </div>
+            }
         </div>
     </div>
 
@@ -214,6 +228,8 @@
         // 1. Generate new Level
         Score += 100;
         Level++;
+        SelectedExample = null; // Hide code example on new level
+
         Success = false;
         ShowResult = false;
         UserCode = "";
@@ -295,4 +311,68 @@
             ErrorMessage = ex.Message;
         }
     }
+
+    // --- Educational Content Logic ---
+    private string? SelectedExample { get; set; }
+    private string? SelectedTitle => SelectedExample?.ToUpper();
+    private string? SelectedCode => SelectedExample switch 
+    {
+        "record" => "public record Droid(string Name, string Model, string Color);",
+        "class" => @"// The 'Old Way' - Manually implementing value-based equality
+public class Droid : IEquatable<Droid>
+{
+    public string Name { get; }
+    public string Model { get; }
+    public string Color { get; }
+
+    public Droid(string name, string model, string color)
+    {
+        Name = name;
+        Model = model;
+        Color = color;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Droid);
+    }
+
+    public bool Equals(Droid? other)
+    {
+        return other != null &&
+               Name == other.Name &&
+               Model == other.Model &&
+               Color == other.Color;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Name, Model, Color);
+    }
+
+    public static bool operator ==(Droid? left, Droid? right)
+    {
+        return EqualityComparer<Droid>.Default.Equals(left, right);
+    }
+
+    public static bool operator !=(Droid? left, Droid? right)
+    {
+        return !(left == right);
+    }
+    
+    public override string ToString()
+    {
+        return $""Droid {{ Name = {Name}, Model = {Model}, Color = {Color} }}"";
+    }
+    
+    // Check Copying? That's another method to write manually!
+    public Droid With(string? name = null, string? model = null, string? color = null) 
+    {
+        return new Droid(name ?? Name, model ?? Model, color ?? Color);
+    }
+}",
+        _ => null
+    };
+
+    private void ShowExample(string type) => SelectedExample = type;
 }
