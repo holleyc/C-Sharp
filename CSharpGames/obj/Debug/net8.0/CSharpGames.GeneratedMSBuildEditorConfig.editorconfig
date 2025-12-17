@@ -22,6 +22,10 @@ build_property._RazorSourceGeneratorDebug =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/xm7x/C-Sharp/C-Sharp/CSharpGames/Components/DroidVisual.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9Ecm9pZFZpc3VhbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/xm7x/C-Sharp/C-Sharp/CSharpGames/Components/Pages/Day01_Replicator.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9EYXkwMV9SZXBsaWNhdG9yLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

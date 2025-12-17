@@ -1,5 +1,6 @@
 @page "/day01"
 @rendermode InteractiveServer
+@using CSharpGames.Models
 
 <PageTitle>Day 1: The Replicator</PageTitle>
 
@@ -7,68 +8,83 @@
     <h1 class="text-primary mb-4">Day 1: The Replicator</h1>
     
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-8 offset-md-2">
+            
+            <!-- Instructions Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h5 class="card-title">Concept: Records</h5>
                     <p class="card-text">
-                        Records are immutable data types. You cannot change a record once created. 
-                        Instead, you use the <code>with</code> expression to create a modified copy.
+                        Records are immutable. You use <code>with</code> to create a modified copy.
                     </p>
-                    <div class="alert alert-secondary">
+                    <div class="alert alert-secondary py-2">
                         <code>var newBot = oldBot with { Property = Value };</code>
                     </div>
                 </div>
             </div>
 
+            <!-- Game Area -->
             <div class="card shadow">
-                <div class="card-header bg-dark text-white">
-                    Factory Floor
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <span>Factory Floor - Level @Level</span>
+                    <span class="badge bg-light text-dark">Score: @Score</span>
                 </div>
                 <div class="card-body">
-                    <p><strong>Mission:</strong> You are a droid factory operator.</p>
-                    <p>
-                        The <strong>Prototype</strong> is locked and cannot be changed (Immutable). 
-                        You need to create a <strong>Target</strong> droid that is exactly the same, 
-                        <em>except</em> for the property that is different.
-                    </p>
-                    <p>
-                        Use the C# <code>with</code> command to copy the Prototype and change just one thing.
-                        <br/>
-                        <small class="text-muted">Compare the Prototype and Target below. What is different?</small>
+                    <p class="text-center mb-4">
+                        <strong>Mission:</strong> Build a Target droid that matches the generic Prototype, but with the specific modifications required.
                     </p>
                     
-                    <div class="row text-center mb-4">
-                        <div class="col-6">
+                    <div class="row text-center mb-4 align-items-end">
+                        <div class="col-5">
                             <div class="p-3 border rounded bg-light">
                                 <h6>Prototype</h6>
-                                <div>Name: <strong>@Prototype.Name</strong></div>
-                                <div>Model: <strong>@Prototype.Model</strong></div>
-                                <div class="text-danger">Color: <strong>@Prototype.Color</strong></div>
+                                <DroidVisual DroidData="@Prototype" />
+                                <div class="mt-2 text-muted small text-start ps-3">
+                                    <div>Name: @Prototype.Name</div>
+                                    <div>Model: @Prototype.Model</div>
+                                    <div>Color: @Prototype.Color</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-6">
+                        <div class="col-2 align-self-center">
+                            <i class="bi bi-arrow-right fs-1 text-muted"></i>
+                        </div>
+                        <div class="col-5">
                             <div class="p-3 border rounded bg-warning bg-opacity-10">
-                                <h6>Target Specification</h6>
-                                <div>Name: <strong>@Target.Name</strong></div>
-                                <div>Model: <strong>@Target.Model</strong></div>
-                                <div class="text-success">Color: <strong>@Target.Color</strong></div>
+                                <h6>Target</h6>
+                                <DroidVisual DroidData="@Target" />
+                                <div class="mt-2 text-muted small text-start ps-3">
+                                    <div class="@(Target.Name != Prototype.Name ? "text-danger fw-bold" : "")">Name: @Target.Name</div>
+                                    <div class="@(Target.Model != Prototype.Model ? "text-danger fw-bold" : "")">Model: @Target.Model</div>
+                                    <div class="@(Target.Color != Prototype.Color ? "text-danger fw-bold" : "")">Color: @Target.Color</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Type the command to build the target:</label>
+                        <label class="form-label">Command Terminal:</label>
                         <div class="input-group">
                             <span class="input-group-text font-monospace">var target = prototype</span>
-                            <input @bind="UserCode" @bind:event="oninput" type="text" class="form-control font-monospace" placeholder=" with { Property = &quot;Value&quot; }" />
-                            <button @onclick="BuildDroid" class="btn btn-primary">Build</button>
+                            <input @bind="UserCode" @bind:event="oninput" type="text" 
+                                   class="form-control font-monospace" 
+                                   placeholder=" with { ... }" 
+                                   disabled="@Success" /> 
+                                   
+                            @if (!Success)
+                            {
+                                <button @onclick="BuildDroid" class="btn btn-primary">Build</button>
+                            }
+                            else
+                            {
+                                <button @onclick="NextLevel" class="btn btn-success">Next Droid &raquo;</button>
+                            }
                         </div>
                          <div class="mt-2">
                             <button class="btn btn-sm btn-outline-info" @onclick="ToggleHint">Need a Hint?</button>
                             @if (ShowHint)
                             {
-                                <span class="ms-2 text-muted fst-italic">Try typing: <code>with { Color = "Red" }</code></span>
+                                <span class="ms-2 text-muted fst-italic">Try typing: <code>@GetHint()</code></span>
                             }
                         </div>
                     </div>
@@ -78,8 +94,7 @@
                         @if (Success)
                         {
                              <div class="alert alert-success">
-                                 <strong>Success!</strong> Droid build complete. <br/>
-                                 Replicated: @ResultOutput
+                                 <strong>Success!</strong> Droid verified. ready for deployment.
                              </div>
                         }
                         else
@@ -97,77 +112,106 @@
 </div>
 
 @code {
-    // 1. Define the Record
-    public record Droid(string Name, string Model, string Color);
+    // 1. Define State
+    private Droid Prototype { get; set; } = new Droid("Alpha", "T-800", "Silver");
+    private Droid Target { get; set; } = new Droid("Alpha", "T-800", "Red"); // Initial target
 
-    private Droid Prototype = new Droid("Alpha", "T-800", "Silver");
-    private Droid Target = new Droid("Alpha", "T-800", "Red"); // Same bot, different color
-
+    private int Level { get; set; } = 1;
+    private int Score { get; set; } = 0;
+    
     private string UserCode { get; set; } = "";
     private bool ShowResult { get; set; } = false;
     private bool Success { get; set; } = false;
     private bool ShowHint { get; set; } = false;
-    private string ResultOutput { get; set; } = "";
     private string ErrorMessage { get; set; } = "";
 
+    // Pools for random generation
+    private readonly string[] Colors = { "Red", "Blue", "Green", "Gold", "Purple", "Orange", "Black", "White" };
+    private readonly string[] Models = { "T-800", "R2-D2", "C-3PO", "BB-8", "IG-11", "HK-47" };
+    private readonly string[] Names = { "Alpha", "Beta", "Gamma", "Delta", "Omega", "Zeta" };
+
     private void ToggleHint() => ShowHint = !ShowHint;
+
+    private string GetHint()
+    {
+        if (Target.Color != Prototype.Color) return $"with {{ Color = \"{Target.Color}\" }}";
+        if (Target.Model != Prototype.Model) return $"with {{ Model = \"{Target.Model}\" }}";
+        if (Target.Name != Prototype.Name) return $"with {{ Name = \"{Target.Name}\" }}";
+        return "with { ... }";
+    }
+
+    private void NextLevel()
+    {
+        // 1. Generate new Level
+        Score += 100;
+        Level++;
+        Success = false;
+        ShowResult = false;
+        UserCode = "";
+        ShowHint = false;
+
+        // 2. Randomly decide what changes: 0=Color, 1=Model, 2=Name
+        var rnd = new Random();
+        var changeType = rnd.Next(0, 3);
+
+        // Reset Prototype Base (optional, keeps it fresh)
+        Prototype = new Droid(
+            Names[rnd.Next(Names.Length)], 
+            Models[rnd.Next(Models.Length)], 
+            "Silver" // Always start silver or basic? Let's use silver for visual clarity of change
+        );
+
+        // Create Target based on Prototype but with ONE change
+        switch (changeType)
+        {
+            case 0: // Change Color
+                string newColor;
+                do { newColor = Colors[rnd.Next(Colors.Length)]; } while (newColor == Prototype.Color);
+                Target = Prototype with { Color = newColor };
+                break;
+            case 1: // Change Model
+                 string newModel;
+                do { newModel = Models[rnd.Next(Models.Length)]; } while (newModel == Prototype.Model);
+                Target = Prototype with { Model = newModel };
+                break;
+            case 2: // Change Name
+                 string newName;
+                do { newName = Names[rnd.Next(Names.Length)]; } while (newName == Prototype.Name);
+                Target = Prototype with { Name = newName };
+                break;
+        }
+    }
 
     private void BuildDroid()
     {
         ShowResult = true;
         try
         {
-            // Simple parsing to simulate "eval" for educational purposes
-            // In a real app we'd use Roslyn scripting, but here we'll manually parse the 'with' syntax
-            // Expected syntax: " with { Color = \"Red\" }" or "with { Color = \"Red\" }"
-
             var code = UserCode.Trim();
-            if (!code.StartsWith("with"))
-            {
-                 throw new Exception("Code must start with the 'with' keyword.");
-            }
+            if (!code.StartsWith("with")) throw new Exception("Code must start with the 'with' keyword.");
 
             // Extract content inside braces
             var start = code.IndexOf('{');
             var end = code.LastIndexOf('}');
-
-            if (start == -1 || end == -1 || end < start)
-                 throw new Exception("Syntax error: Missing braces { }.");
+            if (start == -1 || end == -1 || end < start) throw new Exception("Syntax error: Missing braces { }.");
 
             var content = code.Substring(start + 1, end - start - 1).Trim();
-            
-            // Very basic parser for demonstration: "Color = "Red""
             var parts = content.Split('=');
-            if (parts.Length != 2)
-                 throw new Exception("Syntax error: assign a property like 'Color = ...'");
+            if (parts.Length != 2) throw new Exception("Syntax error: assign a property like 'Color = ...'");
 
             var prop = parts[0].Trim();
-            var valRaw = parts[1].Trim().Trim('"', '\''); // Strip quotes
+            var valRaw = parts[1].Trim().Trim('"', '\''); 
 
             Droid builtDroid;
 
-            if (prop == "Color")
-            {
-                 builtDroid = Prototype with { Color = valRaw };
-            }
-            else if (prop == "Name")
-            {
-                 builtDroid = Prototype with { Name = valRaw };
-            }
-            else if (prop == "Model")
-            {
-                 builtDroid = Prototype with { Model = valRaw };
-            }
-            else
-            {
-                throw new Exception($"Unknown property '{prop}'");
-            }
+            if (prop == "Color") builtDroid = Prototype with { Color = valRaw };
+            else if (prop == "Name") builtDroid = Prototype with { Name = valRaw };
+            else if (prop == "Model") builtDroid = Prototype with { Model = valRaw };
+            else throw new Exception($"Unknown property '{prop}'");
 
-            // Verify
             if (builtDroid == Target)
             {
                 Success = true;
-                ResultOutput = builtDroid.ToString();
             }
             else
             {
