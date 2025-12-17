@@ -187,6 +187,37 @@
                     </div>
                 </div>
             }
+
+            <!-- Real World Context Section -->
+            <div class="card mt-4 border-info shadow-none bg-info bg-opacity-10">
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="bi bi-database-fill me-2"></i>Real World Connection</h5>
+                    <p class="card-text">
+                        <strong>How does this relate to Databases/CRUD?</strong>
+                        <br/>
+                        In a real app, data from a Database is a <strong>Snapshot</strong> of what existed at that moment. Records are perfect for this because they are safe snapshots!
+                    </p>
+                    <div class="d-flex align-items-center justify-content-center gap-3 text-center small text-muted">
+                        <div class="border rounded p-2 bg-white">
+                            <div class="fw-bold text-dark">1. READ</div>
+                            <i class="bi bi-database fs-4"></i>
+                            <div>DB Snapshot<br/>(Record)</div>
+                        </div>
+                        <i class="bi bi-arrow-right fs-4"></i>
+                        <div class="border rounded p-2 bg-white">
+                            <div class="fw-bold text-dark">2. UPDATE</div>
+                            <code class="d-block mb-1">with { ... }</code>
+                            <div>Create New<br/>Version</div>
+                        </div>
+                        <i class="bi bi-arrow-right fs-4"></i>
+                        <div class="border rounded p-2 bg-white">
+                            <div class="fw-bold text-dark">3. SAVE</div>
+                            <i class="bi bi-hdd-network fs-4"></i>
+                            <div>Save New<br/>to DB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
