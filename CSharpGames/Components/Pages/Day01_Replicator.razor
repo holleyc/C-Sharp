@@ -5,12 +5,35 @@
 <PageTitle>Day 1: The Replicator</PageTitle>
 
 <div class="container mt-4">
-    <!-- Historical Context -->
-    <div class="alert alert-info border-info d-flex align-items-center shadow-sm" role="alert">
-        <span class="badge bg-info text-dark me-3 fs-6">New in C# 9.0</span>
-        <div>
-            <strong>Why Records?</strong> Before 2020, ensuring data didn't change (immutability) required writing huge amounts of boilerplate code. 
-            Records solved this "Boilerplate Problem" by giving us value-based equality and safe copying in a single line.
+    <div class="alert alert-info border-info shadow-sm" role="alert">
+        <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-info text-dark me-3 fs-6">New in C# 9.0</span>
+            <div>
+                <strong>Why Records?</strong> Before 2020, ensuring data didn't change (immutability) required writing huge amounts of boilerplate code. 
+                Records solved this "Boilerplate Problem" by giving us value-based equality and safe copying in a single line.
+            </div>
+        </div>
+        
+        <div class="bg-white p-3 rounded border">
+            <h6 class="text-uppercase text-muted small fw-bold mb-2">Effort / Code Required</h6>
+            <div class="row align-items-center mb-1">
+                <div class="col-2 small text-end">Record:</div>
+                <div class="col-8">
+                     <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: 2%"></div>
+                    </div>
+                </div>
+                <div class="col-2 small text-success fw-bold">1 Line</div>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-2 small text-end">Class:</div>
+                <div class="col-8">
+                     <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="col-2 small text-danger fw-bold">50+ Lines</div>
+            </div>
         </div>
     </div>
 
