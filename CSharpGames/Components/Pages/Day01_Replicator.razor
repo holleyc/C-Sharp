@@ -26,7 +26,17 @@
                     Factory Floor
                 </div>
                 <div class="card-body">
-                    <p><strong>Mission:</strong> Replicate the Prototype logic to create the Target droid.</p>
+                    <p><strong>Mission:</strong> You are a droid factory operator.</p>
+                    <p>
+                        The <strong>Prototype</strong> is locked and cannot be changed (Immutable). 
+                        You need to create a <strong>Target</strong> droid that is exactly the same, 
+                        <em>except</em> for the property that is different.
+                    </p>
+                    <p>
+                        Use the C# <code>with</code> command to copy the Prototype and change just one thing.
+                        <br/>
+                        <small class="text-muted">Compare the Prototype and Target below. What is different?</small>
+                    </p>
                     
                     <div class="row text-center mb-4">
                         <div class="col-6">
@@ -34,7 +44,7 @@
                                 <h6>Prototype</h6>
                                 <div>Name: <strong>@Prototype.Name</strong></div>
                                 <div>Model: <strong>@Prototype.Model</strong></div>
-                                <div>Color: <strong>@Prototype.Color</strong></div>
+                                <div class="text-danger">Color: <strong>@Prototype.Color</strong></div>
                             </div>
                         </div>
                         <div class="col-6">
@@ -42,17 +52,24 @@
                                 <h6>Target Specification</h6>
                                 <div>Name: <strong>@Target.Name</strong></div>
                                 <div>Model: <strong>@Target.Model</strong></div>
-                                <div>Color: <strong>@Target.Color</strong></div>
+                                <div class="text-success">Color: <strong>@Target.Color</strong></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Construct the Target using <code>with</code>:</label>
+                        <label class="form-label">Type the command to build the target:</label>
                         <div class="input-group">
                             <span class="input-group-text font-monospace">var target = prototype</span>
-                            <input @bind="UserCode" @bind:event="oninput" type="text" class="form-control font-monospace" placeholder=" with { ... }" />
+                            <input @bind="UserCode" @bind:event="oninput" type="text" class="form-control font-monospace" placeholder=" with { Property = &quot;Value&quot; }" />
                             <button @onclick="BuildDroid" class="btn btn-primary">Build</button>
+                        </div>
+                         <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-info" @onclick="ToggleHint">Need a Hint?</button>
+                            @if (ShowHint)
+                            {
+                                <span class="ms-2 text-muted fst-italic">Try typing: <code>with { Color = "Red" }</code></span>
+                            }
                         </div>
                     </div>
 
@@ -89,8 +106,11 @@
     private string UserCode { get; set; } = "";
     private bool ShowResult { get; set; } = false;
     private bool Success { get; set; } = false;
+    private bool ShowHint { get; set; } = false;
     private string ResultOutput { get; set; } = "";
     private string ErrorMessage { get; set; } = "";
+
+    private void ToggleHint() => ShowHint = !ShowHint;
 
     private void BuildDroid()
     {
