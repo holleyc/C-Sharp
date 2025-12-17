@@ -25,9 +25,15 @@
 
             <!-- Game Area -->
             <div class="card shadow">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <span>Factory Floor - Level @Level</span>
-                    <span class="badge bg-light text-dark">Score: @Score</span>
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fs-5">Factory Floor - Level @Level</span>
+                        <span class="badge bg-light text-dark">Score: @Score</span>
+                    </div>
+                    <!-- Progress Bar -->
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @(CalculateProgress())%" aria-valuenow="@(CalculateProgress())" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <p class="text-center mb-4">
@@ -94,7 +100,15 @@
                         @if (Success)
                         {
                              <div class="alert alert-success">
-                                 <strong>Success!</strong> Droid verified. ready for deployment.
+                                 <strong>Success!</strong> Droid verified.
+                                 <hr/>
+                                 <p class="mb-0 small">
+                                     <i class="bi bi-lightbulb-fill text-warning me-1"></i>
+                                     <strong>Lesson:</strong> You just created a <em>brand new</em> Droid record. 
+                                     The original Prototype is unchanged (Immutable). 
+                                     <br/>
+                                     If this were a <strong>Class</strong>, we would have just "repainted" the old one!
+                                 </p>
                              </div>
                         }
                         else
@@ -107,6 +121,26 @@
                     }
                 </div>
             </div>
+
+            <!-- Data Warehouse Section -->
+            @if (Warehouse.Any())
+            {
+                <div class="card mt-4 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <i class="bi bi-box-seam me-2"></i>Data Warehouse (@Warehouse.Count Units)
+                    </div>
+                    <div class="card-body bg-light">
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            @foreach (var droid in ((IEnumerable<Droid>)Warehouse).Reverse())
+                            {
+                                <div class="border rounded p-2 bg-white text-center shadow-sm" style="width: 80px; height: 90px; overflow: hidden;">
+                                    <DroidVisual DroidData="@droid" Scale="0.6" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -115,6 +149,7 @@
     // 1. Define State
     private Droid Prototype { get; set; } = new Droid("Alpha", "T-800", "Silver");
     private Droid Target { get; set; } = new Droid("Alpha", "T-800", "Red"); // Initial target
+    private List<Droid> Warehouse { get; set; } = new();
 
     private int Level { get; set; } = 1;
     private int Score { get; set; } = 0;
@@ -132,6 +167,8 @@
 
     private void ToggleHint() => ShowHint = !ShowHint;
 
+    private int CalculateProgress() => (Score % 500) / 5; // Simple 0-100 progress for every 500 points
+
     private string GetHint()
     {
         if (Target.Color != Prototype.Color) return $"with {{ Color = \"{Target.Color}\" }}";
@@ -142,6 +179,11 @@
 
     private void NextLevel()
     {
+        // Add to Warehouse before generating new level
+        // We need to re-create the 'successful' droid state because 'Target' is already set
+        // But logic: if build was success, the built droid == Target.
+        Warehouse.Add(Target);
+
         // 1. Generate new Level
         Score += 100;
         Level++;
