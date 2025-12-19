@@ -1,0 +1,303 @@
+@page "/day02"
+@using CSharpGames.Models
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-primary">Day 2: The Squad Builder</h1>
+        <p class="lead text-muted">Master <code>List&lt;T&gt;</code> by assembling the perfect droid squad.</p>
+    </div>
+
+    <!-- Alert / Mission -->
+    <div class="alert alert-secondary border-0 shadow-sm d-flex align-items-center gap-3">
+        <i class="bi bi-robot fs-1 text-secondary"></i>
+        <div>
+            <h5 class="alert-heading fw-bold mb-1">Mission: Squad Assembly</h5>
+            <p class="mb-0">
+                The target squad is set. Use your <strong>Reinforcements</strong> to match it exactly.
+                <br />
+                Available commands: <code>MySquad.Add(d1)</code>, <code>MySquad.RemoveAt(0)</code>, <code>MySquad.Clear()</code>.
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Game Area -->
+        <div class="col-md-12">
+            
+            <!-- Target Area -->
+            <div class="card bg-light border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted mb-3 text-uppercase small fw-bold tracking-wide">Target Squad</h5>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap text-muted">
+                        @if (TargetSquad.Count == 0)
+                        {
+                            <span>(Empty)</span>
+                        }
+                        else
+                        {
+                            @foreach (var droid in TargetSquad)
+                            {
+                                <DroidVisual DroidData="@droid" Scale="0.8" />
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Squad Area -->
+            <div class="card bg-white border-primary shadow mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">MySquad (List&lt;Droid&gt;)</span>
+                    <span class="badge bg-white text-primary">Count: @MySquad.Count</span>
+                </div>
+                <div class="card-body text-center py-5">
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        @if (MySquad.Count == 0)
+                        {
+                            <span class="text-muted fst-italic display-6 opacity-25">MySquad is Empty</span>
+                        }
+                        else
+                        {
+                            @foreach (var droid in MySquad)
+                            {
+                                <DroidVisual DroidData="@droid" Scale="1.0" />
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form @onsubmit="ExecuteCommand">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text font-monospace bg-dark text-light border-dark">Code ></span>
+                            <input type="text" 
+                                   class="form-control font-monospace form-control-lg bg-light" 
+                                   placeholder="MySquad.Add(d1)..." 
+                                   @bind="CommandInput" 
+                                   autofocus />
+                            <button class="btn btn-primary fw-bold px-4" type="submit">
+                                <i class="bi bi-play-fill me-1"></i> Run
+                            </button>
+                        </div>
+                    </form>
+                    @if (!string.IsNullOrEmpty(FeedbackMessage))
+                    {
+                        <div class="mt-2 text-danger small ps-3">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i> @FeedbackMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Reinforcements -->
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-3 text-uppercase small fw-bold">Available Reinforcements</h6>
+                    <div class="d-flex justify-content-center gap-4 flex-wrap">
+                        @for (int i = 0; i < Reinforcements.Count; i++)
+                        {
+                            var r = Reinforcements[i];
+                            var varName = $"d{i+1}";
+                            <div class="text-center position-relative p-3 bg-white rounded shadow-sm border">
+                                <span class="position-absolute top-0 start-50 translate-middle badge rounded-pill bg-dark font-monospace">
+                                    @varName
+                                </span>
+                                <div class="mt-2">
+                                     <DroidVisual DroidData="@r" Scale="0.6" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational Context: Arrays vs Lists -->
+            <div class="alert alert-info border-0 shadow-sm mt-4">
+                <div class="d-flex gap-3">
+                    <i class="bi bi-info-circle-fill fs-3 text-info"></i>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading fw-bold">Why use List&lt;T&gt;?</h5>
+                        <p>
+                            In the past, <strong>Arrays</strong> were fixed size. If you wanted to add a 5th droid to an array of size 4, you had to create a <em>new</em> bigger array and copy everything over.
+                        </p>
+                        
+                        <!-- Visual Comparison -->
+                        <div class="row g-3 my-3">
+                            <div class="col-12 cursor-pointer" @onclick='() => ShowExample("Array", "Fixed Size Pain", "Droid[] squad = new Droid[4]; // Full!\n// To add one more:\nDroid[] bigger = new Droid[5];\nArray.Copy(squad, bigger, 4);\nbigger[4] = newDroid;\nsquad = bigger;")'>
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-danger me-2" style="width: 80px">Array</span>
+                                    <small class="text-secondary fw-bold">Fixed Size (Manual Resizing)</small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 90%" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 cursor-pointer" @onclick='() => ShowExample("List", "Dynamic Freedom", "List<Droid> squad = new();\n// Just add it!\nsquad.Add(newDroid); // Done.")'>
+                                <div class="d-flex align-items-center mb-1">
+                                    <span class="badge bg-success me-2" style="width: 80px">List&lt;T&gt;</span>
+                                    <small class="text-secondary fw-bold">Dynamic (Auto-Growing)</small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 10%" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        @if (ShowCodeExample)
+                        {
+                            <div class="mt-3 p-3 bg-dark rounded position-relative">
+                                <button class="btn-close btn-close-white position-absolute top-0 end-0 m-2" @onclick="() => ShowCodeExample = false"></button>
+                                <h6 class="text-white-50 border-bottom border-secondary pb-2">@SelectedTitle</h6>
+                                <pre class="text-white m-0 small font-monospace">@SelectedCode</pre>
+                            </div>
+                        }
+
+                        <p class="mb-0 small text-muted">A <strong>List</strong> handles all that memory management for you properly.</p>
+                     </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Droid> TargetSquad { get; set; } = new();
+    private List<Droid> MySquad { get; set; } = new();
+    private List<Droid> Reinforcements { get; set; } = new();
+    
+    private string CommandInput { get; set; } = "";
+    private string FeedbackMessage { get; set; } = "";
+    private Random _rng = new Random();
+
+    // Educational Modal State
+    private bool ShowCodeExample { get; set; } = false;
+    private string SelectedTitle { get; set; } = "";
+    private string SelectedCode { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        StartGame();
+    }
+
+    private void StartGame()
+    {
+        // 1. Create Reinforcements (The pool of available droids)
+        Reinforcements = new List<Droid>
+        {
+            new Droid("R-100", "Red", "Standard"),
+            new Droid("B-200", "Blue", "Standard"),
+            new Droid("G-300", "Green", "Standard"),
+            new Droid("Y-400", "Yellow", "Standard")
+        };
+
+        // 2. Generate a random Target Squad from the reinforcements
+        TargetSquad.Clear();
+        // Create a simple level 1: Add 2 random droids
+        TargetSquad.Add(Reinforcements[0]);
+        TargetSquad.Add(Reinforcements[1]);
+        
+        MySquad.Clear();
+        CommandInput = "";
+        FeedbackMessage = "";
+    }
+
+    private void ExecuteCommand()
+    {
+        if (string.IsNullOrWhiteSpace(CommandInput)) return;
+
+        FeedbackMessage = "";
+        var cmd = CommandInput.Trim();
+
+        // Simple Regex or string parsing simulation
+        try 
+        {
+            if (cmd.Contains("MySquad.Add"))
+            {
+                // Parse variable name (d1, d2, etc.)
+                // This is a placeholder logic
+                if (cmd.Contains("d1")) MySquad.Add(Reinforcements[0]);
+                else if (cmd.Contains("d2")) MySquad.Add(Reinforcements[1]);
+                else if (cmd.Contains("d3")) MySquad.Add(Reinforcements[2]);
+                else if (cmd.Contains("d4")) MySquad.Add(Reinforcements[3]);
+                else FeedbackMessage = "Unknown variable.";
+            }
+            else if (cmd.Contains("MySquad.Clear"))
+            {
+                MySquad.Clear();
+            }
+            else if (cmd.Contains("MySquad.RemoveAt"))
+            {
+                // Extract index
+                 // Placeholder: assume simple syntax
+                // Extract number between ( and )
+                var parts = cmd.Split('(');
+                if (parts.Length > 1)
+                {
+                    var inner = parts[1].Replace(")", "").Replace(";", "");
+                    if (int.TryParse(inner, out int index))
+                    {
+                        if (index >= 0 && index < MySquad.Count)
+                        {
+                            MySquad.RemoveAt(index);
+                        }
+                        else
+                        {
+                            FeedbackMessage = $"Index {index} is out of range. Count is {MySquad.Count}.";
+                        }
+                    }
+                }
+            }
+            else
+            {
+                FeedbackMessage = "Command not recognized. Try MySquad.Add(d1) or MySquad.Clear()";
+            }
+            
+            CheckWinCondition();
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = ex.Message;
+        }
+
+        // Keep input for easy chaining? Or clear it? 
+        // Clear it for now to encourage next step
+        CommandInput = "";
+    }
+
+    private void CheckWinCondition()
+    {
+        // Simple equality check
+        if (MySquad.Count == TargetSquad.Count)
+        {
+            bool match = true;
+            for(int i=0; i<MySquad.Count; i++)
+            {
+                if (MySquad[i] != TargetSquad[i]) 
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match)
+            {
+                FeedbackMessage = "SUCCESS! Squads match. Great job!";
+            }
+        }
+    }
+
+    private void ShowExample(string title, string summary, string code)
+    {
+        ShowCodeExample = true;
+        SelectedTitle = $"{title}: {summary}";
+        SelectedCode = code;
+        StateHasChanged();
+    }
+}
