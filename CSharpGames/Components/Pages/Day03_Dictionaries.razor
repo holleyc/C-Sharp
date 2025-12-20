@@ -11,13 +11,15 @@
 
     <!-- History Context -->
     <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
-        <div class="display-6 text-warning"><i class="bi bi-key-fill"></i></div>
+        <div class="display-6 text-warning"><i class="bi bi-clock-history"></i></div>
         <div>
-            <h6 class="fw-bold mb-1">Concept: The Magic Key</h6>
+            <h6 class="fw-bold mb-1">Time Travel: C# 1.0 (2002)</h6>
             <p class="mb-0 small text-muted">
-                <strong>Lists</strong> are great until you need to find <em>one specific thing</em> in a million items. 
-                With a <strong>List</strong>, you have to check them one by one (O(n)). 
-                With a <strong>Dictionary</strong>, you just give the <strong>Key</strong> (like a Serial Number), and you get the item <em>instantly</em> (O(1)).
+                Before <strong>Generics</strong>, we used <code>Hashtable</code>. It was a chaotic bucket where Keys and Values were just <code>object</code>.
+                <br/>
+                You had to <strong>Cast</strong> everything back manually: <code>Droid d = (Droid)depot["R2"];</code>.
+                <br/>
+                If you made a mistake (or boxed an <code>int</code>), the app would crash at runtime. <strong>Dictionary&lt;T&gt;</strong> saves us from that nightmare!
             </p>
         </div>
     </div>
@@ -213,6 +215,8 @@
                 // Expected: Depot.Add("KEY", incoming)
                 if (cmd.Contains("Depot.Add") && cmd.Contains($"\"{currentJob.TargetKey}\""))
                 {
+                    // SAFETY FIRST: Always check if the key exists before adding!
+                    // Dictionary keys must be unique. Adding a duplicate key throws an ArgumentException.
                     if (Depot.ContainsKey(currentJob.TargetKey))
                     {
                         FeedbackMessage = $"Key \"{currentJob.TargetKey}\" already exists! You cannot add it again.";
