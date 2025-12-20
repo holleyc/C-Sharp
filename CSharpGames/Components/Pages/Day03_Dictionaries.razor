@@ -1,0 +1,280 @@
+@page "/day03"
+@using CSharpGames.Models
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-primary">Day 3: The Droid Depot</h1>
+        <p class="lead text-muted">Master <code>Dictionary&lt;TKey, TValue&gt;</code> by managing the warehouse inventory.</p>
+    </div>
+
+    <!-- History Context -->
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
+        <div class="display-6 text-warning"><i class="bi bi-key-fill"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Concept: The Magic Key</h6>
+            <p class="mb-0 small text-muted">
+                <strong>Lists</strong> are great until you need to find <em>one specific thing</em> in a million items. 
+                With a <strong>List</strong>, you have to check them one by one (O(n)). 
+                With a <strong>Dictionary</strong>, you just give the <strong>Key</strong> (like a Serial Number), and you get the item <em>instantly</em> (O(1)).
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Game Area -->
+        <div class="col-md-12">
+            
+            <!-- The Depot (Dictionary Visualization) -->
+            <div class="card bg-white border-primary shadow mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Depot (Dictionary&lt;string, Droid&gt;)</span>
+                    <span class="badge bg-white text-primary">Count: @Depot.Count</span>
+                </div>
+                <div class="card-body py-4">
+                    @if (Depot.Count == 0)
+                    {
+                         <div class="text-center py-5">
+                            <span class="text-muted fst-italic display-6 opacity-25">Depot is Empty</span>
+                         </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" style="width: 150px;">Key (Serial)</th>
+                                        <th scope="col">Value (Droid)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var kvp in Depot)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-dark font-monospace fs-6">"@kvp.Key"</span>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <DroidVisual DroidData="@kvp.Value" Scale="0.5" />
+                                                    <span class="text-muted small">@kvp.Value.Name</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Incoming Orders / Requests -->
+            <div class="card bg-light border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-muted mb-3 text-uppercase small fw-bold tracking-wide">
+                        <i class="bi bi-box-seam me-2"></i>Current Job
+                    </h5>
+                    
+                    @if (CurrentJobIndex < Jobs.Count)
+                    {
+                        var job = Jobs[CurrentJobIndex];
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="display-6">
+                                @if(job.Type == JobType.Store) { <i class="bi bi-download text-success"></i> }
+                                else { <i class="bi bi-search text-info"></i> }
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0">@job.Description</h4>
+                                <p class="text-muted mb-0 small">@job.Hint</p>
+                            </div>
+                            @if(job.Type == JobType.Store)
+                            {
+                                <div class="ms-auto border p-2 bg-white rounded">
+                                    <small class="d-block text-muted text-center mb-1">Incoming Droid</small>
+                                    <DroidVisual DroidData="@job.TargetDroid" Scale="0.6" />
+                                    <div class="text-center font-monospace badge bg-secondary d-block mt-1">@job.TargetKey</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-success py-3">
+                            <h3 class="fw-bold"><i class="bi bi-check-circle-fill me-2"></i>All Jobs Complete!</h3>
+                            <p>You've mastered the Dictionary. The inventory is perfectly indexed.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form @onsubmit="ExecuteCommand">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text font-monospace bg-dark text-light border-dark">Code ></span>
+                            <input type="text" 
+                                   class="form-control font-monospace form-control-lg bg-light" 
+                                   placeholder='Depot.Add("S-1", incoming)...' 
+                                   @bind="CommandInput" 
+                                   disabled="@(CurrentJobIndex >= Jobs.Count)"
+                                   autofocus />
+                            <button class="btn btn-primary fw-bold px-4" type="submit" disabled="@(CurrentJobIndex >= Jobs.Count)">
+                                <i class="bi bi-play-fill me-1"></i> Run
+                            </button>
+                        </div>
+                    </form>
+                    @if (!string.IsNullOrEmpty(FeedbackMessage))
+                    {
+                        <div class="mt-2 text-danger small ps-3">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i> @FeedbackMessage
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="mt-2 text-success small ps-3">
+                            <i class="bi bi-check-lg me-1"></i> @SuccessMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+             <!-- Educational Context: Dictionary Safety -->
+            <div class="alert alert-info border-0 shadow-sm mt-4">
+                <h6 class="fw-bold"><i class="bi bi-shield-check me-2"></i>Safety First</h6>
+                <p class="mb-0 small">
+                    If you try to <code>Depot["X"]</code> and key "X" doesn't exist, the app crashes! 
+                    Always check <code>Depot.ContainsKey("X")</code> first, or use <code>Depot.TryGetValue(...)</code>.
+                    <br/>
+                    Also, <strong>Keys must be unique</strong>. You can't Add "A-1" twice!
+                </p>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    private Dictionary<string, Droid> Depot { get; set; } = new();
+    private List<Job> Jobs { get; set; } = new();
+    private int CurrentJobIndex { get; set; } = 0;
+    
+    private string CommandInput { get; set; } = "";
+    private string FeedbackMessage { get; set; } = "";
+    private string SuccessMessage { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        // Setup scenarios
+        Jobs = new List<Job>
+        {
+            new Job 
+            { 
+                Type = JobType.Store, 
+                TargetKey = "R2", 
+                TargetDroid = new Droid("R2-Unit", "Astro", "Blue"),
+                Description = "Store the Astromech",
+                Hint = "Use Depot.Add(\"R2\", incoming)"
+            },
+            new Job 
+            { 
+                Type = JobType.Store, 
+                TargetKey = "3PO", 
+                TargetDroid = new Droid("Protocol", "Humanoid", "Gold"),
+                Description = "Store the Protocol Droid",
+                Hint = "Use Depot.Add(\"3PO\", incoming)"
+            },
+            new Job 
+            { 
+                Type = JobType.Retrieve, 
+                TargetKey = "R2", 
+                Description = "Retrieve R2",
+                Hint = "Access it using Depot[\"R2\"]" // Simplified for game
+            }
+        };
+    }
+
+    private void ExecuteCommand()
+    {
+        if (string.IsNullOrWhiteSpace(CommandInput)) return;
+        
+        FeedbackMessage = "";
+        SuccessMessage = "";
+        var cmd = CommandInput.Trim();
+        var currentJob = Jobs[CurrentJobIndex];
+
+        try 
+        {
+            if (currentJob.Type == JobType.Store)
+            {
+                // Expected: Depot.Add("KEY", incoming)
+                if (cmd.Contains("Depot.Add") && cmd.Contains($"\"{currentJob.TargetKey}\""))
+                {
+                    if (Depot.ContainsKey(currentJob.TargetKey))
+                    {
+                        FeedbackMessage = $"Key \"{currentJob.TargetKey}\" already exists! You cannot add it again.";
+                    }
+                    else
+                    {
+                        Depot.Add(currentJob.TargetKey, currentJob.TargetDroid);
+                        SuccessMessage = "Correct! Item stored.";
+                        NextJob();
+                    }
+                }
+                else
+                {
+                    FeedbackMessage = "Incorrect syntax or key. Try: Depot.Add(\"" + currentJob.TargetKey + "\", incoming)";
+                }
+            }
+            else if (currentJob.Type == JobType.Retrieve)
+            {
+                 // Expected: Depot["KEY"]
+                if (cmd.Contains($"Depot[\"{currentJob.TargetKey}\"]"))
+                {
+                    if (Depot.ContainsKey(currentJob.TargetKey))
+                    {
+                         SuccessMessage = "Found it! " + Depot[currentJob.TargetKey].Model;
+                         NextJob();
+                    }
+                    else
+                    {
+                        FeedbackMessage = $"Key \"{currentJob.TargetKey}\" not found in Depot.";
+                    }
+                }
+                else
+                {
+                    FeedbackMessage = "To retrieve by key, use the indexer: Depot[\"" + currentJob.TargetKey + "\"]";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = ex.Message;
+        }
+
+        CommandInput = "";
+    }
+
+    private void NextJob()
+    {
+        CurrentJobIndex++;
+        if (CurrentJobIndex < Jobs.Count)
+        {
+            // Just a little UI delay simulation or sound could go here
+        }
+    }
+
+    enum JobType { Store, Retrieve }
+    
+    class Job 
+    {
+        public JobType Type { get; set; }
+        public string TargetKey { get; set; } = "";
+        public Droid? TargetDroid { get; set; }
+        public string Description { get; set; } = "";
+        public string Hint { get; set; } = "";
+    }
+}
