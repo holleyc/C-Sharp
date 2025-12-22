@@ -1,0 +1,408 @@
+@page "/day04"
+@using CSharpGames.Models
+@using System.Linq
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-success">Day 4: Quality Control</h1>
+        <p class="lead text-muted">Master <strong>LINQ</strong> to query and filter the production line.</p>
+    </div>
+
+    <!-- History Context -->
+    <div class="alert alert-success border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
+        <div class="display-6 text-success"><i class="bi bi-clock-history"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Time Travel: C# 3.0 (2007)</h6>
+            <p class="mb-0 small text-muted">
+                Before <strong>LINQ</strong>, filtering lists meant writing ugly <code>foreach</code> loops and temporary lists.
+                <br/>
+                C# 3.0 introduced <strong>Lambdas</strong> <code>d => d.Red</code> and <strong>Extension Methods</strong>, giving us the superpower to query collections declaratively!
+            </p>
+        </div>
+    </div>
+
+    <!-- Educational: Old vs New -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 border-secondary">
+                <div class="card-header bg-secondary text-white fw-bold"><i class="bi bi-hourglass-bottom me-2"></i>The Old Way (C# 1.0)</div>
+                <div class="card-body bg-light font-monospace small" style="background-color: #f8f9fa;">
+                    <pre class="mb-0 text-muted">
+List&lt;Droid&gt; results = new List&lt;Droid&gt;();
+foreach (Droid d in AllDroids) 
+{
+    if (d.Color == "Red") 
+    {
+        results.Add(d);
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 border-success">
+                <div class="card-header bg-success text-white fw-bold"><i class="bi bi-lightning-charge-fill me-2"></i>The LINQ Way (C# 3.0+)</div>
+                <div class="card-body bg-light font-monospace small">
+                    <pre class="mb-0 text-dark fw-bold">
+var results = AllDroids
+    .Where(d => d.Color == "Red")
+    .ToList();
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anatomy of a Query -->
+    <div class="card border-info mb-4 shadow-sm">
+        <div class="card-header bg-info text-white fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Anatomy of a Query</div>
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 text-center font-monospace fs-5 py-2">
+                <div class="d-flex flex-column align-items-center">
+                    <span class="p-2 border rounded bg-warning bg-opacity-10 mb-1" title="The Collection">AllDroids</span>
+                    <span class="badge bg-warning text-dark rounded-pill" style="font-size: 0.6em;">Source</span>
+                </div>
+                <i class="bi bi-arrow-right text-muted opacity-50"></i>
+                <div class="d-flex flex-column align-items-center">
+                    <span class="p-2 border rounded bg-primary bg-opacity-10 mb-1" title="The LINQ Method">.Where</span>
+                    <span class="badge bg-primary rounded-pill" style="font-size: 0.6em;">Method</span>
+                </div>
+                <span class="text-muted fw-light">(</span>
+                <div class="d-flex flex-column align-items-center">
+                    <span class="p-2 border rounded bg-danger bg-opacity-10 mb-1" title="The Lambda Parameter">d</span>
+                    <span class="badge bg-danger rounded-pill" style="font-size: 0.6em;">Input</span>
+                </div>
+                <i class="bi bi-arrow-right-short text-muted"></i>
+                <div class="d-flex flex-column align-items-center">
+                    <span class="p-2 border rounded bg-success bg-opacity-10 mb-1" title="The Predicate / Condition">d.Color == "Red"</span>
+                    <span class="badge bg-success rounded-pill" style="font-size: 0.6em;">Condition</span>
+                </div>
+                <span class="text-muted fw-light">)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Main Game Area -->
+        <div class="col-md-12">
+            
+            <!-- The Data Source (List Visualization) -->
+            <div class="card bg-white border-success shadow mb-4">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">AllDroids (List&lt;Droid&gt;)</span>
+                    <span class="badge bg-white text-success">Count: @AllDroids.Count</span>
+                </div>
+                <div class="card-body py-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Model</th>
+                                    <th scope="col">Color</th>
+                                    <th scope="col">Visual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var droid in DisplayDroids)
+                                {
+                                    <tr class="@(IsHighligted(droid) ? "table-warning" : "")">
+                                        <td>@droid.Name</td>
+                                        <td>@droid.Model</td>
+                                        <td>
+                                            <span class="badge rounded-pill border text-dark" style="background-color: @GetColorHex(droid.Color)">
+                                                @droid.Color
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <DroidVisual DroidData="@droid" Scale="0.4" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    @if (DisplayDroids.Count < AllDroids.Count)
+                    {
+                        <div class="text-center text-muted small mt-2">
+                             (Showing filtered results)
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Current Challenge -->
+            <div class="card bg-light border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title text-muted mb-3 text-uppercase small fw-bold tracking-wide">
+                        <i class="bi bi-code-square me-2"></i>Current Query
+                    </h5>
+                    
+                    @if (CurrentChallengeIndex < Challenges.Count)
+                    {
+                        var challenge = Challenges[CurrentChallengeIndex];
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="display-6 text-primary">
+                                <i class="bi bi-filter"></i>
+                            </div>
+                            <div>
+                                <h4 class="fw-bold mb-0">@challenge.Description</h4>
+                                <p class="text-muted mb-0 small">@challenge.Hint</p>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-success py-3">
+                            <h3 class="fw-bold"><i class="bi bi-trophy-fill me-2"></i>All Queries Complete!</h3>
+                            <p>You're a LINQ master. The assembly line is optimized.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form @onsubmit="ExecuteQuery">
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text font-monospace bg-dark text-light border-dark">var results = </span>
+                            <input type="text" 
+                                   class="form-control font-monospace form-control-lg bg-light" 
+                                   placeholder='AllDroids.Where(d => ...)' 
+                                   @bind="CommandInput" 
+                                   disabled="@(CurrentChallengeIndex >= Challenges.Count)"
+                                   autofocus />
+                            <button class="btn btn-success fw-bold px-4" type="submit" disabled="@(CurrentChallengeIndex >= Challenges.Count)">
+                                <i class="bi bi-play-fill me-1"></i> Run
+                            </button>
+                        </div>
+                    </form>
+                    @if (!string.IsNullOrEmpty(FeedbackMessage))
+                    {
+                        <div class="mt-2 text-danger small ps-3">
+                            <i class="bi bi-exclamation-circle-fill me-1"></i> @FeedbackMessage
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="mt-2 text-success small ps-3">
+                            <i class="bi bi-check-lg me-1"></i> @SuccessMessage
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Fun Fact -->
+            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 mt-5">
+                <div class="display-6 text-warning"><i class="bi bi-lightbulb-fill"></i></div>
+                <div>
+                    <h6 class="fw-bold mb-1">Fun Fact</h6>
+                    <p class="mb-0 small text-muted">
+                        LINQ (Language Integrated Query) was inspired by Functional Programming concepts (like Haskell's Monads) and SQL. 
+                        It allows you to query <strong>Objects</strong>, <strong>Databases</strong> (Entity Framework), and <strong>XML</strong> using the exact same syntax!
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    // Droid Inventory Data
+    private List<Droid> AllDroids { get; set; } = new();
+    private List<Droid> DisplayDroids { get; set; } = new();
+
+    // Game State
+    private List<Challenge> Challenges { get; set; } = new();
+    private int CurrentChallengeIndex { get; set; } = 0;
+    
+    // User Input
+    private string CommandInput { get; set; } = "";
+    private string FeedbackMessage { get; set; } = "";
+    private string SuccessMessage { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        // Seed the "Database" with some droids
+        AllDroids = new List<Droid>
+        {
+            new Droid("R2-D2", "Astro", "Blue"),
+            new Droid("R5-D4", "Astro", "Red"),
+            new Droid("C-3PO", "Protocol", "Gold"),
+            new Droid("IG-88", "Assassin", "Silver"),
+            new Droid("BB-8", "Astro", "Orange"),
+            new Droid("R4-P17", "Astro", "Red")
+        };
+        
+        // Initially show all droids in the grid
+        DisplayDroids = AllDroids.ToList();
+
+        // Setup the levels/challenges for the user
+        Challenges = new List<Challenge>
+        {
+            new Challenge
+            {
+                Description = "Find all 'Red' droids",
+                Hint = "Use AllDroids.Where(d => d.Color == \"Red\")",
+                ExpectedFilter = d => d.Color == "Red",
+                KeywordCheck = new[] { "Where", "Color", "Red" }
+            },
+            new Challenge
+            {
+                Description = "Find all 'Astro' droids",
+                Hint = "Use AllDroids.Where(d => d.Model == \"Astro\")",
+                ExpectedFilter = d => d.Model == "Astro",
+                KeywordCheck = new[] { "Where", "Model", "Astro" }
+            },
+            new Challenge
+            {
+                Description = "Sort droids by Name",
+                Hint = "Use AllDroids.OrderBy(d => d.Name)",
+                ExpectedFilter = null, // Sort handled differently
+                IsSort = true,
+                KeywordCheck = new[] { "OrderBy", "Name" }
+            },
+            new Challenge
+            {
+                Description = "Find the FIRST 'Protocol' droid",
+                Hint = "Use AllDroids.First(d => d.Model == \"Protocol\")",
+                ExpectedFilter = d => d.Model == "Protocol",
+                IsSingle = true,
+                KeywordCheck = new[] { "First", "Model", "Protocol" }
+            }
+        };
+    }
+
+    private void ExecuteQuery()
+    {
+        if (string.IsNullOrWhiteSpace(CommandInput)) return;
+        
+        FeedbackMessage = "";
+        SuccessMessage = "";
+        var cmd = CommandInput.Trim();
+        var currentChallenge = Challenges[CurrentChallengeIndex];
+
+        try 
+        {
+            // Basic "Compiler" - check for keywords
+            foreach (var key in currentChallenge.KeywordCheck)
+            {
+                if (!cmd.Contains(key, StringComparison.OrdinalIgnoreCase))
+                {
+                    FeedbackMessage = $"Compiler Error: Missing keyword or property '{key}'";
+                    return;
+                }
+            }
+
+            // Simulate Execution
+            if (currentChallenge.IsSort)
+            {
+                // Verify sort logic simulation
+                 if (cmd.Contains("OrderBy") && cmd.Contains("Name"))
+                 {
+                     DisplayDroids = AllDroids.OrderBy(d => d.Name).ToList();
+                     SuccessMessage = "Correct! List sorted.";
+                     NextChallenge();
+                 }
+                 else
+                 {
+                     FeedbackMessage = "Incorrect syntax. Try .OrderBy(d => d.Name)";
+                 }
+            }
+            else if (currentChallenge.IsSingle)
+            {
+                 if (cmd.Contains("First") || cmd.Contains("FirstOrDefault"))
+                 {
+                     var result = AllDroids.Where(currentChallenge.ExpectedFilter!).FirstOrDefault();
+                     if (result != null)
+                     {
+                         // Show just one
+                         DisplayDroids = new List<Droid> { result };
+                         SuccessMessage = $"Found match: {result.Name}";
+                         NextChallenge();
+                     }
+                     else
+                     {
+                         FeedbackMessage = "Logic seems okay, but no droid matched!";
+                     }
+                 }
+                 else 
+                 {
+                     FeedbackMessage = "Incorrect syntax. Try .First(...)";
+                 }
+            }
+            else
+            {
+                // Standard Where
+                if (cmd.Contains("Where"))
+                {
+                     var results = AllDroids.Where(currentChallenge.ExpectedFilter!).ToList();
+                     DisplayDroids = results;
+                     
+                     if (results.Count > 0)
+                     {
+                        SuccessMessage = $"Correct! Found {results.Count} droids.";
+                        NextChallenge();
+                     }
+                     else
+                     {
+                         FeedbackMessage = "Query ran successfully but returned 0 results. Check your conditions!";
+                     }
+                }
+                else
+                {
+                     FeedbackMessage = "Incorrect syntax. Try .Where(...)";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = ex.Message;
+        }
+    }
+
+    private void NextChallenge()
+    {
+        CurrentChallengeIndex++;
+        CommandInput = ""; // Clear input
+        
+        if (CurrentChallengeIndex < Challenges.Count)
+        {
+             DisplayDroids = AllDroids.ToList();
+        }
+    }
+
+    private bool IsHighligted(Droid d)
+    {
+        // Visual helper could go here
+        return false;
+    }
+    
+    private string GetColorHex(string colorName)
+    {
+        return colorName.ToLower() switch
+        {
+            "red" => "#ffcccc",
+            "blue" => "#cce5ff",
+            "gold" => "#fff3cd",
+            "silver" => "#e2e3e5",
+            "orange" => "#ffe5d0",
+            _ => "#f8f9fa"
+        };
+    }
+
+    class Challenge
+    {
+        public string Description { get; set; } = "";
+        public string Hint { get; set; } = "";
+        public Func<Droid, bool>? ExpectedFilter { get; set; }
+        public string[] KeywordCheck { get; set; } = Array.Empty<string>();
+        public bool IsSort { get; set; }
+        public bool IsSingle { get; set; }
+    }
+}
