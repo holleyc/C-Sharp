@@ -1,0 +1,222 @@
+@page "/day05"
+@using CSharpGames.Models
+@using System.Threading
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-danger">Day 5: The Fab Plant</h1>
+        <p class="lead text-muted">Learn <strong>Async & Await</strong> by managing the production line.</p>
+    </div>
+
+    <!-- History Context -->
+    <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
+        <div class="display-6 text-danger"><i class="bi bi-clock-history"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Time Travel: C# 5.0 (2012)</h6>
+            <p class="mb-0 small text-muted">
+                Before C# 5.0, writing asynchronous code involving callbacks was painful ("Callback Hell").
+                <br/>
+                The <code>async</code> and <code>await</code> keywords revolutionized programming by letting us write 
+                asynchronous code that <em>looks</em> synchronous!
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- The Bad Way -->
+        <div class="col-md-6">
+            <div class="card h-100 border-secondary shadow-sm">
+                <div class="card-header bg-secondary text-white fw-bold">
+                    <i class="bi bi-x-circle-fill me-2"></i>The Blocking Way
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Uses <code>Thread.Sleep(3000)</code>. This freezes the UI!</p>
+                    
+                    <button class="btn btn-outline-dark w-100 mb-3" @onclick="BuildBlocking">
+                        Build Droid (Block)
+                    </button>
+
+                    @if (IsBlockingBuild)
+                    {
+                        <div class="alert alert-secondary">
+                             Building... (You can't read this because UI is frozen!)
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-center my-3">
+                         @if (BlockingDroid != null)
+                         {
+                             <DroidVisual DroidData="@BlockingDroid" Scale="0.8" />
+                         }
+                         else
+                         {
+                             <div style="width: 80px; height: 80px; border: 2px dashed #ccc; border-radius: 50%;" class="d-flex align-items-center justify-content-center text-muted">?</div>
+                         }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- The Good Way -->
+        <div class="col-md-6">
+            <div class="card h-100 border-success shadow-sm">
+                <div class="card-header bg-success text-white fw-bold">
+                    <i class="bi bi-check-circle-fill me-2"></i>The Async Way
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Uses <code>await Task.Delay(3000)</code>. UI stays alive!</p>
+                    
+                    <button class="btn btn-success w-100 mb-3" @onclick="BuildAsync" disabled="@IsAsyncBuilding">
+                        @if(IsAsyncBuilding) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                        Build Droid (Async)
+                    </button>
+
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                             role="progressbar" 
+                             style="width: @(AsyncProgress)%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-center my-3">
+                         @if (AsyncDroid != null)
+                         {
+                             <DroidVisual DroidData="@AsyncDroid" Scale="0.8" />
+                         }
+                         else
+                         {
+                             <div style="width: 80px; height: 80px; border: 2px dashed #ccc; border-radius: 50%;" class="d-flex align-items-center justify-content-center text-muted">?</div>
+                         }
+                    </div>
+                    
+                    @if (AsyncDroid != null)
+                    {
+                        <div class="text-center text-success fw-bold small">Fabrication Complete!</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mass Production -->
+    <div class="card mt-4 border-primary shadow-sm">
+        <div class="card-header bg-primary text-white fw-bold">
+            <i class="bi bi-boxes me-2"></i>Mass Production (Task.WhenAll)
+        </div>
+        <div class="card-body">
+            <p class="small text-muted">Build 3 droids in parallel. Total time is max of individual times, not sum!</p>
+            <button class="btn btn-primary mb-3" @onclick="BuildBatchAsync" disabled="@IsBatchBuilding">
+                 Start Batch Job
+            </button>
+            
+            <div class="d-flex justify-content-around">
+                @foreach(var d in BatchDroids)
+                {
+                    <DroidVisual DroidData="@d" Scale="0.6" />
+                }
+                @if (IsBatchBuilding)
+                {
+                    <div class="spinner-grow text-primary" role="status"></div>
+                    <div class="spinner-grow text-primary" role="status"></div>
+                    <div class="spinner-grow text-primary" role="status"></div>
+                }
+            </div>
+            
+            @if (BatchTime > 0)
+            {
+                <div class="mt-3 alert alert-info py-2">
+                    <small>Completed in <strong>@BatchTime ms</strong></small>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Fun Fact -->
+    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center gap-3 mt-5">
+        <div class="display-6 text-warning"><i class="bi bi-lightbulb-fill"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Fun Fact</h6>
+            <p class="mb-0 small text-muted">
+                When you compile <code>async/await</code> code, the C# compiler actually rewrites your method into a complex <strong>State Machine</strong> class!
+                It breaks your code into chunks at every <code>await</code>, allowing the thread to leave and come back later when the task is done.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    // Blocking State
+    private Droid? BlockingDroid;
+    private bool IsBlockingBuild = false;
+
+    // Async State
+    private Droid? AsyncDroid;
+    private bool IsAsyncBuilding = false;
+    private int AsyncProgress = 0;
+
+    // Batch State
+    private List<Droid> BatchDroids = new();
+    private bool IsBatchBuilding = false;
+    private long BatchTime = 0;
+
+
+    // 1. THE BAD WAY: Blocking the Thread
+    private void BuildBlocking()
+    {
+        IsBlockingBuild = true;
+        // In Blazor Server, this might block the specific circuit thread, 
+        // making the UI unresponsive for this user until it finishes.
+        // It won't update "IsBlockingBuild" visual because render queue is blocked!
+        
+        Thread.Sleep(3000); // Simulate heavy work (3 seconds)
+        
+        BlockingDroid = new Droid("Sleep-Bot", "Worker", "Gray");
+        IsBlockingBuild = false;
+    }
+
+    // 2. THE GOOD WAY: Async/Await
+    private async Task BuildAsync()
+    {
+        IsAsyncBuilding = true;
+        AsyncDroid = null;
+        AsyncProgress = 0;
+
+        // Simulate work with progress updates
+        for (int i = 0; i <= 100; i += 10)
+        {
+            AsyncProgress = i;
+            StateHasChanged(); // Force UI refresh
+            await Task.Delay(300); // Wait 300ms without blocking thread
+        }
+
+        AsyncDroid = new Droid("Active-Bot", "Worker", "Green");
+        IsAsyncBuilding = false;
+    }
+
+    // 3. PARALLEL: Task.WhenAll
+    private async Task BuildBatchAsync()
+    {
+        IsBatchBuilding = true;
+        BatchDroids.Clear();
+        BatchTime = 0;
+        
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Launch 3 tasks in parallel
+        var t1 = Task.Delay(2000).ContinueWith(_ => new Droid("Batch-1", "Astro", "Blue"));
+        var t2 = Task.Delay(3000).ContinueWith(_ => new Droid("Batch-2", "Protocol", "Gold"));
+        var t3 = Task.Delay(1000).ContinueWith(_ => new Droid("Batch-3", "Assassin", "Silver"));
+
+        // Wait for ALL to finish
+        var results = await Task.WhenAll(t1, t2, t3);
+        
+        watch.Stop();
+        BatchTime = watch.ElapsedMilliseconds;
+
+        BatchDroids.AddRange(results);
+        IsBatchBuilding = false;
+    }
+}
