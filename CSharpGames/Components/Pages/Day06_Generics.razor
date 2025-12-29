@@ -1,0 +1,159 @@
+@page "/day06"
+@using CSharpGames.Models
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-primary">Day 6: The Shipping Dept</h1>
+        <p class="lead text-muted">Master <strong>Generics</strong> to write reusable, type-safe code.</p>
+    </div>
+
+    <!-- History Context -->
+    <div class="alert alert-primary border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
+        <div class="display-6 text-primary"><i class="bi bi-clock-history"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Time Travel: C# 2.0 (2005)</h6>
+            <p class="mb-0 small text-muted">
+                Before Generics, we used <code>object</code> for everything (like <code>ArrayList</code>). 
+                This caused performance issues (boxing) and runtime errors if you casted wrong.
+                <br/>
+                <strong>Generics</strong> <code>List&lt;T&gt;</code> solved this by letting us define a placeholder <strong>T</strong> that becomes a specific type at runtime!
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- Droid Box -->
+        <div class="col-md-6">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="bi bi-box-seam me-2"></i>Box&lt;Droid&gt;
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">A box specifically for Droids.</p>
+                    
+                    <div class="d-flex justify-content-center my-3">
+                         @if (DroidBox.IsFull)
+                         {
+                             <div class="text-center">
+                                 <i class="bi bi-box2-fill display-1 text-primary"></i>
+                                 <div class="mt-2">
+                                     <DroidVisual DroidData="@DroidBox.Content" Scale="0.5" />
+                                 </div>
+                             </div>
+                         }
+                         else
+                         {
+                             <i class="bi bi-box2 display-1 text-muted opacity-25"></i>
+                         }
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" @onclick="PackDroid" disabled="@DroidBox.IsFull">
+                            Pack New Droid
+                        </button>
+                        <button class="btn btn-outline-danger" @onclick="UnpackDroid" disabled="@(!DroidBox.IsFull)">
+                            Unpack
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- String Box -->
+        <div class="col-md-6">
+            <div class="card h-100 border-warning shadow-sm">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="bi bi-box-seam me-2"></i>Box&lt;string&gt;
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">A box specifically for Text (Spare Parts).</p>
+                    
+                    <div class="d-flex justify-content-center align-items-center my-3" style="height: 150px;">
+                         @if (StringBox.IsFull)
+                         {
+                             <div class="text-center animate__animated animate__bounceIn">
+                                 <i class="bi bi-box2-fill display-1 text-warning"></i>
+                                 <div class="mt-2 badge bg-dark text-wrap p-2 shadow-sm">
+                                     "@StringBox.Content"
+                                 </div>
+                             </div>
+                         }
+                         else
+                         {
+                             <i class="bi bi-box2 display-1 text-muted opacity-25"></i>
+                         }
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" placeholder="Part Name..." @bind="PartInput" disabled="@StringBox.IsFull">
+                        <button class="btn btn-warning" @onclick="PackString" disabled="@(StringBox.IsFull || string.IsNullOrWhiteSpace(PartInput))">
+                            Pack
+                        </button>
+                    </div>
+                    <button class="btn btn-outline-danger w-100" @onclick="UnpackString" disabled="@(!StringBox.IsFull)">
+                        Unpack
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Code Explanation -->
+    <div class="card mt-4 border-secondary shadow-sm">
+        <div class="card-header bg-secondary text-white fw-bold">
+            <i class="bi bi-code-slash me-2"></i>How It Works
+        </div>
+        <div class="card-body font-monospace small bg-light">
+            <p class="text-muted">The same logic works for both types because we used <code>T</code>!</p>
+<pre class="mb-0">
+public class Box&lt;T&gt; 
+{
+    public T Content { get; set; }
+    public void Pack(T item) { ... }
+}
+
+// Usage
+var droidBox = new Box&lt;Droid&gt;();
+var stringBox = new Box&lt;string&gt;();
+</pre>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    // 1. Droid Box Logic
+    private Box<Droid> DroidBox = new Box<Droid>();
+    
+    private void PackDroid()
+    {
+        var newDroid = new Droid("Shipping-Bot", "Loader", "Orange");
+        DroidBox.Pack(newDroid);
+    }
+
+    private void UnpackDroid()
+    {
+        DroidBox.Unpack();
+    }
+
+    // 2. String Box Logic
+    private Box<string> StringBox = new Box<string>();
+    private string PartInput = "";
+
+    private void PackString()
+    {
+        if (!string.IsNullOrWhiteSpace(PartInput))
+        {
+            StringBox.Pack(PartInput);
+            PartInput = ""; // Reset input
+        }
+    }
+
+    private void UnpackString()
+    {
+        StringBox.Unpack();
+    }
+}
