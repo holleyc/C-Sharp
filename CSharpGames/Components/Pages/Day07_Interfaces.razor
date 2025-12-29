@@ -1,0 +1,154 @@
+@page "/day07"
+@using CSharpGames.Models
+@rendermode InteractiveServer
+
+<div class="container mt-4" style="max-width: 900px;">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold text-info">Day 7: Testing Facility</h1>
+        <p class="lead text-muted">Use <strong>Interfaces</strong> to create a standard protocol for different droids.</p>
+    </div>
+
+    <!-- History Context -->
+    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
+        <div class="display-6 text-info"><i class="bi bi-cpu-fill"></i></div>
+        <div>
+            <h6 class="fw-bold mb-1">Concept: Polymorphism</h6>
+            <p class="mb-0 small text-muted">
+                An <strong>Interface</strong> defines a "contract" (e.g., <code>ITestable</code>). Any class that implements it 
+                <strong>MUST</strong> have the specific methods.
+                <br/>
+                This lets us treat different objects (AstroDroid, MedicalDroid) as the <strong>same type</strong> (`ITestable`)!
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Control Panel -->
+        <div class="col-md-4">
+            <div class="card h-100 border-dark shadow-sm">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <i class="bi bi-joystick me-2"></i>Control Panel
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted">Run diagnostics on all connected units.</p>
+                    <button class="btn btn-primary w-100 mb-3" @onclick="RunAllDiagnostics">
+                        <i class="bi bi-play-circle-fill me-2"></i>Run System Check
+                    </button>
+                    <button class="btn btn-outline-secondary w-100" @onclick="Reset">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnostic Results -->
+        <div class="col-md-8">
+            <div class="card h-100 border-secondary shadow-sm">
+                <div class="card-header bg-light fw-bold">
+                    <i class="bi bi-terminal me-2"></i>Diagnostic Terminal
+                </div>
+                <div class="card-body bg-black text-success font-monospace p-3" style="min-height: 300px; max-height: 400px; overflow-y: auto;">
+                    @if (Logs.Count == 0)
+                    {
+                        <div class="text-muted opacity-50">Waiting for command...</div>
+                    }
+                    else
+                    {
+                        @foreach (var log in Logs)
+                        {
+                            <div class="mb-2 border-bottom border-secondary pb-1">
+                                <span class="text-secondary small">@log.Timestamp.ToString("HH:mm:ss")</span>
+                                <span class="ms-2">@log.Message</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Representation of Interfaces -->
+    <div class="row mt-4 g-3">
+        @foreach (var droid in Droids)
+        {
+            <div class="col-md-4">
+                <div class="card text-center h-100 @(IsActive(droid) ? "border-success shadow" : "border-light bg-light opacity-75")">
+                    <div class="card-body">
+                        <div class="mb-2">
+                             @if (droid is AstroDroid) { <i class="bi bi-robot display-4 text-primary"></i> }
+                             else if (droid is MedicalDroid) { <i class="bi bi-heart-pulse display-4 text-danger"></i> }
+                             else if (droid is TacticalDroid) { <i class="bi bi-shield-shaded display-4 text-dark"></i> }
+                             else { <i class="bi bi-question-circle display-4"></i> }
+                        </div>
+                        <h5 class="card-title">@GetDroidName(droid)</h5>
+                        <h6 class="card-subtitle mb-2 text-muted small">Implements ITestable</h6>
+                        <div class="progress mt-3" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar" style="width: @droid.BatteryLevel%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    private List<ITestable> Droids = new();
+    private List<LogEntry> Logs = new();
+    private ITestable? CurrentlyTesting = null;
+
+    protected override void OnInitialized()
+    {
+        // Polymorphism in action: List<ITestable> holding different types!
+        Droids.Add(new AstroDroid());
+        Droids.Add(new MedicalDroid());
+        Droids.Add(new TacticalDroid());
+    }
+
+    private async Task RunAllDiagnostics()
+    {
+        Logs.Clear();
+        Logs.Add(new LogEntry("Initializing Global System Check...", DateTime.Now));
+        
+        foreach (var droid in Droids)
+        {
+            CurrentlyTesting = droid;
+            StateHasChanged();
+            await Task.Delay(800); // Simulate network latency
+
+            // POLYMORPHISM MAGIC HERE: We don't know the exact class, 
+            // but we know it follows the ITestable contract!
+            var report = droid.RunDiagnostics();
+            
+            Logs.Add(new LogEntry(report, DateTime.Now));
+        }
+
+        CurrentlyTesting = null;
+        Logs.Add(new LogEntry("--- DIAGNOSTICS COMPLETE ---", DateTime.Now));
+    }
+
+    private void Reset()
+    {
+        Logs.Clear();
+        CurrentlyTesting = null;
+    }
+
+    private bool IsActive(ITestable d) => d == CurrentlyTesting;
+
+    // Helper to get name via Reflection or property checking since Name isn't on ITestable directly 
+    // (Wait, let's fix that! I didn't verify if Name is on ITestable. 
+    // Checking my previous file write... no, I didn't put Name on ITestable. 
+    // I put BatteryLevel. So I need to cast or use Pattern Matching to get Name for display, 
+    // OR update ITestable. Let's use Pattern Matching here for education.)
+    private string GetDroidName(ITestable d)
+    {
+        if (d is AstroDroid a) return a.Name;
+        if (d is MedicalDroid m) return m.Name;
+        if (d is TacticalDroid t) return t.Name;
+        return "Unknown Unit";
+    }
+
+    record LogEntry(string Message, DateTime Timestamp);
+}
